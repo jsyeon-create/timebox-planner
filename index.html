@@ -5,6 +5,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TimeBox Planner</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<script type="module">
+// ── Firebase 초기화 ──────────────────────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhehWIHjoX6GMrWMi_6u9H1pg0s2_2Exc",
+  authDomain: "timeplanner-6b076.firebaseapp.com",
+  projectId: "timeplanner-6b076",
+  storageBucket: "timeplanner-6b076.firebasestorage.app",
+  messagingSenderId: "906669423036",
+  appId: "1:906669423036:web:0d79ede12a30b38a40d3b9"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const dataRef = doc(db, "timebox", "main");
+
+// Firestore → 전역 캐시
+window._fsCache = null;
+window._fsDirty = false;
+
+window.fsLoadAll = async function() {
+  if (window._fsCache) return window._fsCache;
+  try {
+    const snap = await getDoc(dataRef);
+    window._fsCache = snap.exists() ? (snap.data().days || {}) : {};
+  } catch(e) {
+    window._fsCache = {};
+  }
+  return window._fsCache;
+};
+
+window.fsSaveAll = async function(data) {
+  window._fsCache = data;
+  try {
+    await setDoc(dataRef, { days: data });
+  } catch(e) {
+    console.error("Firestore 저장 실패", e);
+  }
+};
+
+// 앱 초기화는 Firestore 로드 후에 실행
+window.addEventListener('DOMContentLoaded', async () => {
+  await window.fsLoadAll();
+  window._appReady = true;
+  if (window._initApp) window._initApp();
+});
+</script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -917,10 +966,13 @@ header {
 const STORE_KEY = 'timebox_v2';
 
 function loadAll() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch(e) { return {}; }
+  // Firestore 캐시에서 동기 반환 (fsLoadAll()로 미리 로드됨)
+  return window._fsCache || {};
 }
 function saveAll(data) {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
+  window._fsCache = data;
+  // 비동기 저장 (UI 블로킹 없이)
+  window.fsSaveAll(data);
 }
 
 // ── Date state ────────────────────────────────────────────────────────────────
@@ -1443,8 +1495,8 @@ function renderAll() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-// Seed today with example data if empty
-(function init() {
+// Firestore 로드 완료 후 실행
+window._initApp = function() {
   const today = todayKey();
   const all = loadAll();
   if (!all[today]) {
@@ -1467,7 +1519,11 @@ function renderAll() {
   updateTimerDisplay();
   updateTimerLabel();
   setInterval(renderTimeline, 60000);
-})();
+};
+
+// Firestore가 이미 로드됐으면 바로 실행, 아니면 대기
+if (window._appReady) window._initApp();
+// (아직 안 됐으면 Firebase 모듈의 DOMContentLoaded 핸들러가 호출함)
 </script>
 </body>
 </html>
