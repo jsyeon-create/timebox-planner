@@ -288,40 +288,158 @@ header {
 }
 .btn-add:hover { background: #EADCD3; transform: translateY(-1px); }
 
-/* ── Block rows ── */
-.blocks-list { padding: 6px 0; }
+/* ── Gantt Timeline ── */
+.blocks-list { padding: 0; }
 
-.block-row {
-  display: grid;
-  grid-template-columns: 52px 1fr;
-  min-height: 50px;
-  border-bottom: 1px solid var(--line);
-  transition: background 0.15s;
+.gantt-wrap {
   position: relative;
 }
-.block-row:last-child { border-bottom: none; }
-.block-row:hover { background: rgba(26,23,20,0.02); }
-.block-row.is-done { background: var(--done-bg); }
-.block-row.is-active { background: #FFF8F4; }
-.block-row.is-active::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: var(--accent);
-  border-radius: 0 2px 2px 0;
+.gantt-header {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  border-bottom: 1px solid var(--line);
+  padding: 7px 0;
 }
-
-.block-time {
-  padding: 13px 0 13px 16px;
+.gantt-header-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--ink-faint);
+  letter-spacing: .1em;
+  padding-left: 12px;
+}
+.gantt-hour-marks {
+  display: flex;
+  padding-right: 10px;
+}
+.gantt-hour-mark {
+  flex: 1;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--ink-lighter);
+  text-align: center;
+}
+.gantt-row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
+.gantt-row:last-child { border-bottom: none; }
+.gantt-hour-label {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   color: var(--ink-faint);
-  line-height: 1.5;
-  display: flex; flex-direction: column; gap: 1px;
+  padding: 14px 0 0 10px;
   user-select: none;
 }
-.block-time .hour { color: var(--ink); font-weight: 500; font-size: 11px; }
+.gantt-lane {
+  position: relative;
+  border-left: 1px solid var(--line);
+}
+.gantt-grid-lines {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+}
+.gantt-grid-line {
+  flex: 1;
+  border-right: 1px dashed var(--line);
+}
+.gantt-grid-line:last-child { border-right: none; }
+
+/* 블록 */
+.gantt-block {
+  position: absolute;
+  left: 3px; right: 3px;
+  border-radius: 5px;
+  padding: 3px 7px;
+  font-size: 11px;
+  font-weight: 500;
+  overflow: hidden;
+  cursor: pointer;
+  transition: filter .15s, transform .1s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.gantt-block:hover { filter: brightness(.93); transform: scaleX(.99); }
+.gantt-block.is-done { opacity: .5; }
+.gantt-block.is-active {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.gantt-block-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.gantt-block-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  opacity: .7;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+/* 현재 시각 선 */
+.gantt-now-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 10;
+  pointer-events: none;
+}
+.gantt-now-dot {
+  position: absolute;
+  left: -4px; top: -4px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* 범위 밖 블록 안내 */
+.gantt-out-of-range {
+  padding: 8px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-faint);
+  border-top: 1px dashed var(--line);
+  letter-spacing: .04em;
+}
+
+/* 기존 block-row 호환 (액션 버튼용) */
+.block-row { display: none; }
+
+.block-content {
+  padding: 9px 12px 9px 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.block-check {
+  width: 17px; height: 17px;
+  border-radius: 4px;
+  border: 1.5px solid var(--ink-lighter);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 3px;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s;
+}
+.block-check:checked { background: var(--done-line); border-color: var(--done-line); }
+.block-check:checked::after {
+  content: '';
+  width: 4px; height: 7px;
+  border: 2px solid white;
+  border-top: none; border-left: none;
+  transform: rotate(45deg) translate(-1px,-1px);
+  position: absolute;
+}
 
 /* actual time row inside block */
 .actual-time-row {
@@ -1069,7 +1187,12 @@ function updateHeader() {
   badge.innerHTML = isToday() ? '<span class="today-badge">TODAY</span>' : '';
 }
 
-// ── Timeline render ───────────────────────────────────────────────────────────
+// ── Gantt Timeline render ─────────────────────────────────────────────────────
+const GANTT_START = 9;   // 09:00
+const GANTT_END   = 19;  // 19:00
+const GANTT_HOURS = Array.from({length: GANTT_END - GANTT_START}, (_,i) => GANTT_START + i);
+const ROW_H_PX = 52; // 한 시간 행 높이(px)
+
 function renderTimeline() {
   const blocks = getCurrentBlocks();
   const sorted = [...blocks].sort((a,b)=>timeToMin(a.start)-timeToMin(b.start));
@@ -1083,33 +1206,95 @@ function renderTimeline() {
     return;
   }
 
-  list.innerHTML = sorted.map(b => {
-    const s=timeToMin(b.start), e=timeToMin(b.end);
-    const isActive = isToday() && !b.done && now>=s && now<e;
-    const t = tagMap[b.tag] || tagMap.work;
-    return `
-      <div class="block-row${b.done?' is-done':''}${isActive?' is-active':''}" id="row-${b.id}">
-        <div class="block-time">
-          <span class="hour">${b.start}</span>
-          <span>${b.end}</span>
-        </div>
-        <div class="block-content">
-          <input type="checkbox" class="block-check" ${b.done?'checked':''} onchange="toggleDone('${b.id}')">
-          <div class="block-body">
-            <div class="block-title">${b.title}</div>
-            <div class="block-meta">
-              <span class="tag ${t.cls}">${t.label}</span>
-              <span class="duration">${formatDuration(b.start,b.end)}</span>
-            </div>
-            ${renderActualTime(b)}
-          </div>
-          <div class="block-actions">
-            <button class="action-btn edit" onclick="editBlock('${b.id}')" title="편집">✎</button>
-            <button class="action-btn del" onclick="deleteBlock('${b.id}')" title="삭제">✕</button>
+  // 범위 밖 블록 분리
+  const inRange  = sorted.filter(b => timeToMin(b.end) > GANTT_START*60 && timeToMin(b.start) < GANTT_END*60);
+  const outRange = sorted.filter(b => timeToMin(b.end) <= GANTT_START*60 || timeToMin(b.start) >= GANTT_END*60);
+
+  // 헤더
+  let html = `<div class="gantt-wrap">
+    <div class="gantt-header">
+      <div class="gantt-header-label">TIME</div>
+      <div class="gantt-hour-marks">
+        <div class="gantt-hour-mark">:00</div>
+        <div class="gantt-hour-mark">:15</div>
+        <div class="gantt-hour-mark">:30</div>
+        <div class="gantt-hour-mark">:45</div>
+      </div>
+    </div>`;
+
+  // 시간 행 생성
+  GANTT_HOURS.forEach(h => {
+    const laneId = `lane-${h}`;
+    html += `
+      <div class="gantt-row">
+        <div class="gantt-hour-label">${h}</div>
+        <div class="gantt-lane" id="${laneId}">
+          <div class="gantt-grid-lines">
+            <div class="gantt-grid-line"></div>
+            <div class="gantt-grid-line"></div>
+            <div class="gantt-grid-line"></div>
+            <div class="gantt-grid-line"></div>
           </div>
         </div>
       </div>`;
-  }).join('');
+  });
+
+  // 범위 밖 블록 안내
+  if (outRange.length > 0) {
+    const titles = outRange.map(b=>`${b.start} ${b.title}`).join(' · ');
+    html += `<div class="gantt-out-of-range">범위 밖 블록: ${titles}</div>`;
+  }
+
+  html += `</div>`;
+  list.innerHTML = html;
+
+  // 블록 배치
+  inRange.forEach(b => {
+    const sMin = timeToMin(b.start);
+    const eMin = timeToMin(b.end);
+    const clampS = Math.max(sMin, GANTT_START * 60);
+    const clampE = Math.min(eMin, GANTT_END * 60);
+
+    const startH = Math.floor(clampS / 60);
+    const lane = document.getElementById(`lane-${startH}`);
+    if (!lane) return;
+
+    const isActive = isToday() && !b.done && now >= sMin && now < eMin;
+    const t = tagMap[b.tag] || tagMap.work;
+    const offsetMin = clampS % 60;
+    const durMin = clampE - clampS;
+    const topPct = (offsetMin / 60) * 100;
+    const heightPx = Math.max((durMin / 60) * ROW_H_PX, 22);
+
+    const sh = Math.floor(sMin/60), sm = sMin%60;
+    const eh = Math.floor(eMin/60), em = eMin%60;
+    const fmt = (hh,mm) => `${hh}:${String(mm).padStart(2,'0')}`;
+
+    const el = document.createElement('div');
+    el.className = `gantt-block ${t.cls}${b.done?' is-done':''}${isActive?' is-active':''}`;
+    el.id = `gblock-${b.id}`;
+    el.style.top = topPct + '%';
+    el.style.height = heightPx + 'px';
+    el.onclick = () => editBlock(b.id);
+    el.innerHTML = `
+      <div class="gantt-block-title">${b.done ? '✓ ' : ''}${b.title}</div>
+      ${heightPx > 30 ? `<div class="gantt-block-time">${fmt(sh,sm)}–${fmt(eh,em)} · ${formatDuration(b.start,b.end)}</div>` : ''}
+    `;
+    lane.appendChild(el);
+  });
+
+  // 현재 시각 선
+  if (isToday() && now >= GANTT_START * 60 && now < GANTT_END * 60) {
+    const nowH = Math.floor(now / 60);
+    const lane = document.getElementById(`lane-${nowH}`);
+    if (lane) {
+      const line = document.createElement('div');
+      line.className = 'gantt-now-line';
+      line.style.top = ((now % 60) / 60 * 100) + '%';
+      line.innerHTML = '<div class="gantt-now-dot"></div>';
+      lane.appendChild(line);
+    }
+  }
 
   updateStats(sorted);
   updateFocus(sorted, now);
