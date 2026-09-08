@@ -318,14 +318,12 @@ header {
   color: var(--ink-lighter);
   text-align: center;
 }
-.gantt-row {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  min-height: 48px;
-  border-bottom: 1px solid var(--line);
+.gantt-lane {
   position: relative;
+  border-left: 1px solid var(--line);
+  overflow: visible;
+  z-index: 1;
 }
-.gantt-row:last-child { border-bottom: none; }
 .gantt-hour-label {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
@@ -333,10 +331,15 @@ header {
   padding: 14px 0 0 10px;
   user-select: none;
 }
-.gantt-lane {
+.gantt-row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
   position: relative;
-  border-left: 1px solid var(--line);
+  z-index: 0;
 }
+.gantt-row:last-child { border-bottom: none; }
 .gantt-grid-lines {
   position: absolute;
   inset: 0;
@@ -363,6 +366,7 @@ header {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  z-index: 2;
 }
 .gantt-block:hover { filter: brightness(.93); transform: scaleX(.99); }
 .gantt-block.is-done { opacity: .5; }
