@@ -1071,6 +1071,12 @@ header {
         <input class="form-input" id="inpActualEnd" type="time" placeholder="—">
       </div>
     </div>
+    <div class="form-group" id="doneGroup" style="display:none; margin-top:4px;">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="inpDone" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);">
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-faint);letter-spacing:.06em;">완료로 표시</span>
+      </label>
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">취소</button>
       <button class="btn-save" onclick="saveBlock()">추가하기</button>
@@ -1390,6 +1396,8 @@ function openModal(id) {
     document.getElementById('inpTag').value   = b.tag;
     document.getElementById('inpActualStart').value = b.actualStart || '';
     document.getElementById('inpActualEnd').value   = b.actualEnd   || '';
+    document.getElementById('inpDone').checked = !!b.done;
+    document.getElementById('doneGroup').style.display = 'block';
     saveBtn.textContent = '수정하기';
     modal.querySelector('h3').textContent = '타임박스 수정';
   } else {
@@ -1400,6 +1408,8 @@ function openModal(id) {
     document.getElementById('inpTag').value   = 'work';
     document.getElementById('inpActualStart').value = '';
     document.getElementById('inpActualEnd').value   = '';
+    document.getElementById('inpDone').checked = false;
+    document.getElementById('doneGroup').style.display = 'none';
     saveBtn.textContent = '추가하기';
     modal.querySelector('h3').textContent = '새 타임박스';
   }
@@ -1433,8 +1443,8 @@ function saveBlock() {
       b.tag         = document.getElementById('inpTag').value;
       b.actualStart = actualStart;
       b.actualEnd   = actualEnd;
-      // 실제 시간이 입력되면 자동 완료 처리
-      if (actualStart && actualEnd) b.done = true;
+      // 체크박스 or 실제 시간 입력 시 완료 처리
+      b.done = document.getElementById('inpDone').checked || !!(actualStart && actualEnd);
     }
     saveBlocks(blocks);
     closeModal();
