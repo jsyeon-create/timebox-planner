@@ -1223,7 +1223,7 @@ function updateHeader() {
 
 // ── Gantt Timeline render ─────────────────────────────────────────────────────
 const GANTT_START = 9;   // 09:00
-const GANTT_END   = 19;  // 19:00
+const GANTT_END   = 22;  // 22:00
 const GANTT_HOURS = Array.from({length: GANTT_END - GANTT_START}, (_,i) => GANTT_START + i);
 const ROW_H_PX = 52; // 한 시간 행 높이(px)
 
@@ -1248,12 +1248,6 @@ function renderTimeline() {
   let html = `<div class="gantt-wrap">
     <div class="gantt-header">
       <div class="gantt-header-label">TIME</div>
-      <div class="gantt-hour-marks">
-        <div class="gantt-hour-mark">:00</div>
-        <div class="gantt-hour-mark">:15</div>
-        <div class="gantt-hour-mark">:30</div>
-        <div class="gantt-hour-mark">:45</div>
-      </div>
     </div>`;
 
   // 시간 행 생성
@@ -1263,12 +1257,6 @@ function renderTimeline() {
       <div class="gantt-row">
         <div class="gantt-hour-label">${h}</div>
         <div class="gantt-lane" id="${laneId}">
-          <div class="gantt-grid-lines">
-            <div class="gantt-grid-line"></div>
-            <div class="gantt-grid-line"></div>
-            <div class="gantt-grid-line"></div>
-            <div class="gantt-grid-line"></div>
-          </div>
         </div>
       </div>`;
   });
