@@ -1254,13 +1254,15 @@ function renderTimeline() {
       <div class="gantt-header-label">TIME</div>
     </div>`;
 
-  // 시간 행 생성
-  GANTT_HOURS.forEach(h => {
+  // 시간 행 생성 — 위 행일수록 z-index 높게 (블록이 아래 행 lane에 가려지지 않도록)
+  const totalHours = GANTT_HOURS.length;
+  GANTT_HOURS.forEach((h, idx) => {
     const laneId = `lane-${h}`;
+    const rowZ = totalHours - idx; // 9시=가장 높음, 22시=1
     html += `
-      <div class="gantt-row">
+      <div class="gantt-row" style="z-index:${rowZ}">
         <div class="gantt-hour-label">${h}</div>
-        <div class="gantt-lane" id="${laneId}">
+        <div class="gantt-lane" id="${laneId}" data-hour="${h}">
         </div>
       </div>`;
   });
@@ -1274,12 +1276,31 @@ function renderTimeline() {
   html += `</div>`;
   list.innerHTML = html;
 
+  // 빈 영역 클릭 → 블록 추가 모달 (클릭된 y좌표로 시간 역산)
+  GANTT_HOURS.forEach(h => {
+    const lane = document.getElementById(`lane-${h}`);
+    if (!lane) return;
+    lane.addEventListener('click', (e) => {
+      // 블록이나 삭제 버튼 클릭은 무시
+      if (e.target.closest('.gantt-block')) return;
+      const rect = lane.getBoundingClientRect();
+      const yRatio = (e.clientY - rect.top) / rect.height;
+      const clickedMin = h * 60 + Math.round(yRatio * 60 / 15) * 15; // 15분 단위 스냅
+      const startH = Math.floor(clickedMin / 60);
+      const startM = clickedMin % 60;
+      const endMin = clickedMin + 60;
+      const endH = Math.floor(endMin / 60);
+      const endM = endMin % 60;
+      const fmt2 = (hh, mm) => `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+      openModal(null, fmt2(startH, startM), fmt2(Math.min(endH,22), endM));
+    });
+  });
+
   // 겹침 처리: 블록별 컬럼 인덱스 계산
   function getColumns(blocks) {
     const cols = [];
     blocks.forEach(b => {
       const sMin = timeToMin(b.start);
-      const eMin = timeToMin(b.end);
       let placed = false;
       for (let i = 0; i < cols.length; i++) {
         const lastEnd = timeToMin(cols[i][cols[i].length - 1].end);
@@ -1295,7 +1316,6 @@ function renderTimeline() {
         cols.push([b]);
       }
     });
-    // 각 블록의 총 컬럼 수 계산
     blocks.forEach(b => {
       const sMin = timeToMin(b.start);
       const eMin = timeToMin(b.end);
@@ -1329,12 +1349,13 @@ function renderTimeline() {
     const offsetMin = clampS % 60;
     const durMin = clampE - clampS;
     const topPct = (offsetMin / 60) * 100;
-    const heightPx = Math.max((durMin / 60) * ROW_H_PX, 22);
+    // ① 높이를 px 대신 % 기반으로 정확히 계산 (행 높이 기준 비율)
+    const heightPct = (durMin / 60) * 100;
+    const minHeightPx = 22;
 
     const sh = Math.floor(sMin/60), sm = sMin%60;
     const eh = Math.floor(eMin/60), em = eMin%60;
 
-    // 컬럼 분할로 좌우 위치 계산
     const colW = 100 / b._totalCols;
     const leftPct = b._col * colW;
 
@@ -1342,10 +1363,12 @@ function renderTimeline() {
     el.className = `gantt-block ${t.cls}${b.done?' is-done':''}${isActive?' is-active':''}`;
     el.id = `gblock-${b.id}`;
     el.style.top = topPct + '%';
-    el.style.height = heightPx + 'px';
+    el.style.height = `max(${minHeightPx}px, ${heightPct}%)`;
     el.style.left = `calc(${leftPct}% + 3px)`;
     el.style.right = 'auto';
     el.style.width = `calc(${colW}% - 6px)`;
+    el.style.zIndex = 2;
+    // ② 블록 전체 영역 클릭 가능 — 삭제 버튼만 제외
     el.onclick = (e) => { if (!e.target.classList.contains('gantt-block-del')) editBlock(b.id); };
 
     const delBtn = document.createElement('button');
@@ -1354,9 +1377,10 @@ function renderTimeline() {
     delBtn.textContent = '✕';
     delBtn.onclick = (e) => { e.stopPropagation(); deleteBlock(b.id); };
 
+    const showTime = durMin >= 30;
     el.innerHTML = `
       <div class="gantt-block-title">${b.done ? '✓ ' : ''}${b.title}</div>
-      ${heightPx > 30 ? `<div class="gantt-block-time">${fmt(sh,sm)}–${fmt(eh,em)} · ${formatDuration(b.start,b.end)}</div>` : ''}
+      ${showTime ? `<div class="gantt-block-time">${fmt(sh,sm)}–${fmt(eh,em)} · ${formatDuration(b.start,b.end)}</div>` : ''}
     `;
     el.appendChild(delBtn);
     lane.appendChild(el);
@@ -1370,6 +1394,7 @@ function renderTimeline() {
       const line = document.createElement('div');
       line.className = 'gantt-now-line';
       line.style.top = ((now % 60) / 60 * 100) + '%';
+      line.style.zIndex = 3;
       line.innerHTML = '<div class="gantt-now-dot"></div>';
       lane.appendChild(line);
     }
@@ -1454,7 +1479,7 @@ function deleteBlock(id) {
 // ── Modal ─────────────────────────────────────────────────────────────────────
 let editingId = null;
 
-function openModal(id) {
+function openModal(id, defaultStart, defaultEnd) {
   editingId = id || null;
   const modal = document.getElementById('modalOverlay');
   const saveBtn = modal.querySelector('.btn-save');
@@ -1475,10 +1500,10 @@ function openModal(id) {
     saveBtn.textContent = '수정하기';
     modal.querySelector('h3').textContent = '타임박스 수정';
   } else {
-    // 추가 모드
+    // 추가 모드 — 클릭 위치 시간 or 기본값
     document.getElementById('inpTitle').value = '';
-    document.getElementById('inpStart').value = '09:00';
-    document.getElementById('inpEnd').value   = '10:00';
+    document.getElementById('inpStart').value = defaultStart || '09:00';
+    document.getElementById('inpEnd').value   = defaultEnd   || '10:00';
     document.getElementById('inpTag').value   = 'work';
     document.getElementById('inpActualStart').value = '';
     document.getElementById('inpActualEnd').value   = '';
