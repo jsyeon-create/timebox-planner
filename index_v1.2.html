@@ -902,15 +902,16 @@ header {
   cursor: pointer; transition: background 0.15s; letter-spacing: 0.04em;
 }
 .btn-save:hover { background: var(--accent); }
-.btn-delete {
-  flex: 1; padding: 9px;
+.btn-delete-full {
+  width: 100%; padding: 9px;
   border-radius: 8px;
   border: 1.5px solid #e0b0a0;
   font-family: 'DM Mono', monospace; font-size: 11px;
   background: transparent; color: var(--accent);
   cursor: pointer; transition: all 0.15s;
+  letter-spacing: 0.04em;
 }
-.btn-delete:hover { background: #fff0ec; border-color: var(--accent); }
+.btn-delete-full:hover { background: #fff0ec; border-color: var(--accent); }
 
 /* Toast */
 .toast {
@@ -1111,8 +1112,10 @@ header {
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">취소</button>
-      <button class="btn-delete" id="btnDelete" onclick="deleteBlockFromModal()" style="display:none">삭제</button>
       <button class="btn-save" onclick="saveBlock()">추가하기</button>
+    </div>
+    <div id="deleteRow" style="display:none; margin-top:8px;">
+      <button class="btn-delete-full" id="btnDelete" onclick="deleteBlockFromModal()">이 블록 삭제</button>
     </div>
   </div>
 </div>
@@ -1497,7 +1500,7 @@ function openModal(id, defaultStart, defaultEnd) {
     document.getElementById('inpActualEnd').value   = b.actualEnd   || '';
     document.getElementById('inpDone').checked = !!b.done;
     document.getElementById('doneGroup').style.display = 'block';
-    document.getElementById('btnDelete').style.display = 'block';
+    document.getElementById('deleteRow').style.display = 'block';
     saveBtn.textContent = '수정하기';
     modal.querySelector('h3').textContent = '타임박스 수정';
   } else {
@@ -1510,7 +1513,7 @@ function openModal(id, defaultStart, defaultEnd) {
     document.getElementById('inpActualEnd').value   = '';
     document.getElementById('inpDone').checked = false;
     document.getElementById('doneGroup').style.display = 'none';
-    document.getElementById('btnDelete').style.display = 'none';
+    document.getElementById('deleteRow').style.display = 'none';
     saveBtn.textContent = '추가하기';
     modal.querySelector('h3').textContent = '새 타임박스';
   }
