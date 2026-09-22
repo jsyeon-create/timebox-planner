@@ -316,7 +316,7 @@ header {
   display: grid;
   grid-template-columns: 36px 1fr;
   border-bottom: 1px solid var(--line);
-  min-height: 36px;
+  min-height: 44px;
   position: relative;
 }
 .tl-row:last-child { border-bottom: none; }
@@ -353,7 +353,7 @@ header {
   position: absolute;
   top: 2px; bottom: 2px;
   border-radius: 5px;
-  padding: 3px 6px;
+  padding: 3px 22px 3px 6px; /* 오른쪽 여백으로 삭제 버튼 공간 확보 */
   font-size: 11px;
   font-weight: 500;
   overflow: hidden;
@@ -387,22 +387,25 @@ header {
 }
 .tl-seg-del {
   position: absolute;
-  top: 2px; right: 2px;
-  width: 15px; height: 15px;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 16px; height: 16px;
   border-radius: 3px;
   border: none;
-  background: rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.18);
   color: inherit;
-  font-size: 9px;
-  line-height: 15px;
+  font-size: 10px;
+  line-height: 16px;
   text-align: center;
   cursor: pointer;
   display: none;
   padding: 0;
-  z-index: 5;
+  z-index: 10;
+  flex-shrink: 0;
 }
-.tl-seg:hover .tl-seg-del { display: block; }
-.tl-seg-del:hover { background: rgba(0,0,0,0.3); }
+.tl-seg:hover .tl-seg-del { display: flex; align-items: center; justify-content: center; }
+.tl-seg-del:hover { background: rgba(0,0,0,0.35); }
 
 /* 현재 시각 선 */
 .tl-now-seg {
