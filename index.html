@@ -316,7 +316,7 @@ header {
   display: grid;
   grid-template-columns: 36px 1fr;
   border-bottom: 1px solid var(--line);
-  min-height: 44px;
+  min-height: 44px; /* JS에서 겹침 시 동적으로 늘림 */
   position: relative;
 }
 .tl-row:last-child { border-bottom: none; }
@@ -1317,6 +1317,20 @@ function renderTimeline() {
   }
   html += `</div>`;
   list.innerHTML = html;
+
+  // 행별 최대 겹침 수에 따라 row 높이 동적 설정
+  const BASE_H = 44; // 기본 행 높이(px)
+  TL_HOURS.forEach(h => {
+    const here = inRange.filter(b => {
+      const s = timeToMin(b.start), e = timeToMin(b.end);
+      return s < (h+1)*60 && e > h*60;
+    });
+    const maxCols = here.length > 0 ? Math.max(...here.map(b => b._totalCols[h] || 1)) : 1;
+    const rowEl = document.getElementById(`row-${h}`);
+    if (rowEl && maxCols > 1) {
+      rowEl.style.minHeight = (BASE_H * maxCols) + 'px';
+    }
+  });
 
   // 빈 영역 클릭 → 추가 모달
   TL_HOURS.forEach(h => {
